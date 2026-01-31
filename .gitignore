@@ -3,27 +3,41 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.so
 *.egg-info/
-dist/
-build/
-
-# Virtual envs
-.venv/
-venv/
-env/
+.eggs/
+*.egg
 
 # Django
 *.log
 local_settings.py
-db.sqlite3
-media/
-staticfiles/
+*.sqlite3
 
-# OS/editor
-.DS_Store
-.vscode/
-.idea/
-
-# Secrets / env
+# Env
 .env
 .env.*
+
+# venv
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.pid
+
+# Node
+node_modules/
+
+# Tests / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+gcpkeys.json
