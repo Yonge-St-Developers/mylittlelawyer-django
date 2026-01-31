@@ -7,11 +7,18 @@ from google.cloud import storage
 
 @dataclass(frozen=True)
 class GCPStorageConfig:
+    """Configuration for connecting to a GCP Storage bucket."""
     bucket_name: str
     credentials_json: Optional[str] = None
     project_id: Optional[str] = None
 
 def get_storage_client(config: Optional[GCPStorageConfig] = None) -> storage.Client:
+    """
+    Build a GCP Storage client.
+
+    Uses explicit service-account JSON if provided; otherwise relies on
+    Application Default Credentials (ADC) in the runtime environment.
+    """
     if config is None:
         config = GCPStorageConfig(
             bucket_name=DEFAULT_GCP_BUCKET,
@@ -21,13 +28,20 @@ def get_storage_client(config: Optional[GCPStorageConfig] = None) -> storage.Cli
 
     if config.credentials_json:
         return storage.Client.from_service_account_json(
-            config.credentials_json, project=config.project_id
+            config.credentials_json,
+            project=config.project_id
         )
     
     return storage.Client(project=config.project_id)
 
 
 def get_bucket(config: Optional[GCPStorageConfig] = None) -> storage.Bucket:
+    """
+    Return the configured bucket instance.
+
+    Raises ValueError when the bucket name is missing because all storage
+    operations require a target bucket.
+    """
     if config is None:
         config = GCPStorageConfig(
             bucket_name=DEFAULT_GCP_BUCKET,
@@ -49,6 +63,13 @@ def upload_pdf(
     content_type: str = "application/pdf",
     config: Optional[GCPStorageConfig] = None,
 ) -> str:
+    """
+    Upload raw PDF bytes to GCP and return the public URL.
+
+    - file_bytes: raw PDF data (bytes)
+    - destination_path: object path within the bucket
+    - content_type: defaults to application/pdf
+    """
     bucket = get_bucket(config)
     blob = bucket.blob(destination_path)
     blob.upload_from_string(file_bytes, content_type=content_type)
@@ -62,6 +83,11 @@ def upload_pdf_fileobj(
     content_type: str = "application/pdf",
     config: Optional[GCPStorageConfig] = None,
 ) -> str:
+    """
+    Upload a PDF from a file-like object and return the public URL.
+
+    Use this for streaming uploads (e.g., from Django file uploads).
+    """
     bucket = get_bucket(config)
     blob = bucket.blob(destination_path)
     blob.upload_from_file(file_obj, content_type=content_type)
@@ -73,6 +99,11 @@ def download_pdf(
     source_path: str,
     config: Optional[GCPStorageConfig] = None,
 ) -> bytes:
+    """
+    Download a PDF from GCP and return it as raw bytes.
+
+    - source_path: object path within the bucket
+    """
     bucket = get_bucket(config)
     blob = bucket.blob(source_path)
     return blob.download_as_bytes()
@@ -84,6 +115,11 @@ def download_pdf_to_fileobj(
     file_obj: BytesIO,
     config: Optional[GCPStorageConfig] = None,
 ) -> BytesIO:
+    """
+    Download a PDF into a file-like object.
+
+    Returns the same file object (rewound to the start) for convenience.
+    """
     bucket = get_bucket(config)
     blob = bucket.blob(source_path)
     blob.download_to_file(file_obj)
